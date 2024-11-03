@@ -17,7 +17,6 @@ To implement this script in your project, you can follow a similar approach as s
 import requests
 
 session=requests.Session()
-session.headers={"apikey": "709256.3e9d6f976cac483ebf5a56dc0c474424"}
 
 task=session.post("http://127.0.0.1:8003/funcaptcha/createTask",json={
     "preset": "outlook_register",
