@@ -3,6 +3,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import padding
 from curl_cffi import requests as requests2
 from Crypto.Util.Padding import pad, unpad
+from funcap_reversed import FunCap
 from flask import Flask, request
 from colorama import Fore as f
 from colorama import Fore as b
@@ -10,8 +11,6 @@ from javascript import require
 from Crypto.Cipher import AES
 from datetime import datetime
 from io import BytesIO
-
-import numpy as np
 import contextlib
 import traceback
 import threading
@@ -24,7 +23,6 @@ import ctypes
 import random
 import struct
 import base64
-import execjs
 import colr
 import json
 import uuid
@@ -37,8 +35,6 @@ create_script = require("vm").Script
 logging.getLogger('werkzeug').setLevel(logging.ERROR)
 with open("webgl.json") as file:
     webgls=json.loads(file.read())
-with open("arkose.js") as file:
-    gctx = execjs.compile(file.read())
 
 class Utils:
     solved=0
@@ -82,13 +78,6 @@ class Utils:
         for word in words:
             salt += struct.pack('>I', word & 0xFFFFFFFF)
         return salt[:sig_bytes]
-
-    @staticmethod
-    def randsalt(ctx) -> list:
-        return ctx.call(
-            'randsigbyte',
-            8,
-        )
 
     @staticmethod
     def int_to_bytes(n: str, length: int) -> bytes:
@@ -199,7 +188,7 @@ class Arkose:
 
     @staticmethod
     def encrypt_double(self, main: str, extra: str) -> str:
-        salt_words=Utils.randsalt(gctx)
+        salt_words=FunCap.randsigbyte(8)
         key_words= Arkose.generate_other_key(main, salt_words)
         key_bytes = Utils.to_sigbytes(key_words, 32)
         iv_bytes = Utils.to_sigbytes(key_words[-4:], 16)
@@ -305,24 +294,13 @@ class Arkose:
         return cipher_text
 
     @staticmethod
-    def generate_key(ctx:execjs.compile, s_value:str, useragent:str) -> list:
-        key=Utils.dict_to_list(ctx.call(
-            'genkey',
-            useragent,
-            s_value
-        ))
-        return key
-
-    @staticmethod
     def make_encrypted_dict(self, data:str) -> str:
         s_value=Utils.hex(Utils.uint8_array(8))
         iv_value=Utils.uint8_array(16)
-        key=Arkose.generate_key(
-            gctx, 
-            s_value,
-            f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{self.chrome_version}.0.0.0 Safari/537.36{self.x_ark_value}"
-        )
 
+        key = FunCap.genkey(
+            f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{self.chrome_version}.0.0.0 Safari/537.36{self.x_ark_value}",
+            s_value)
         result=Arkose.encrypt_ct(
             text=bytes(data.encode()),
             key=bytes(key),
@@ -879,7 +857,7 @@ class Funcaptcha:
 
         enhanced_fp.append({
             "key":"webgl_hash_webgl",
-            "value":gctx.call("x64hash128",self.proccess_webgl2(enhanced_fp))
+            "value":FunCap.x64hash128(self.proccess_webgl2(enhanced_fp))
         })
 
         enhanced_fp_more=[
@@ -1155,36 +1133,36 @@ class Funcaptcha:
 
         fp=[
             {
-                "key":"api_type",
-                "value":"js"
+                "key": "api_type",
+                "value": "js"
             },
             {
-                "key":"f",
-                "value":gctx.call("x64hash128", self.process_fp(fp1), 0)
+                "key": "f",
+                "value": FunCap.x64hash128(self.process_fp(fp1), 0)
             },
             {
-                "key":"n",
-                "value":base64.b64encode(str(int(time_now)).encode()).decode()
+                "key": "n",
+                "value": base64.b64encode(str(int(time_now)).encode()).decode()
             },
             {
-                "key":"wh",
+                "key": "wh",
                 "value": f"{str(uuid.uuid4().hex)}|72627afbfd19a741c7da1732218301ac"
             },
             {
-                "key":"enhanced_fp",
-                "value":enhanced_fp
+                "key": "enhanced_fp",
+                "value": enhanced_fp
             },
             {
-                "key":"fe",
-                "value":fp1
+                "key": "fe",
+                "value": fp1
             },
             {
-                "key":"ife_hash",
-                "value": gctx.call("x64hash128", ", ".join(fp1), 38)
+                "key": "ife_hash",
+                "value": FunCap.x64hash128(", ".join(fp1), 38)
             },
             {
-                "key":"jsbd",
-                "value":"{\"HL\":6,\"NCE\":true,\"DT\":\"\",\"NWD\":\"false\",\"DMTO\":1,\"DOTO\":1}"
+                "key": "jsbd",
+                "value": "{\"HL\":6,\"NCE\":true,\"DT\":\"\",\"NWD\":\"false\",\"DMTO\":1,\"DOTO\":1}"
             }
         ]
 
