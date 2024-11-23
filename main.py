@@ -1206,10 +1206,7 @@ class Funcaptcha:
         }
 
         if self.sitekey=="747B83EC-2CA3-43AD-A7DF-701F286FBABA":
-            task["data[origin_page]"]="github_signup_redesign"
-        if self.blob:
-            task["data[blob]"]=self.blob
-        
+            task["data[origin_page]"]="github_signup_redesign"        
         return self.session.post(
             f'{self.apiurl}/fc/gt2/public_key/{self.sitekey}',
             data=task,
