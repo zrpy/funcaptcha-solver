@@ -1206,8 +1206,8 @@ class Funcaptcha:
         }
 
         if self.sitekey=="747B83EC-2CA3-43AD-A7DF-701F286FBABA":
-            task["data[origin_page]"]="github_signup_redesign"        
-        return self.session.post(
+            task["data[origin_page]"]="github_signup_redesign"       
+        r=self.session.post(
             f'{self.apiurl}/fc/gt2/public_key/{self.sitekey}',
             data=task,
             headers={
@@ -1227,6 +1227,8 @@ class Funcaptcha:
                 'x-ark-esync-value': self.x_ark_value,
             }
         ).json()
+        print(r)
+        return r
 
 class _solver_stats:
     def calc_cpm():
